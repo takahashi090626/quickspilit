@@ -1,13 +1,95 @@
-body {
+* {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  padding: 0;
+  box-sizing: border-box;
 }
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #F5FCFF;
+  color: #333333;
+}
+.container {
+  max-width: 414px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #4CAF50;
+}
+.button {
+  display: block;
+  width: 100%;
+  padding: 15px;
+  background-color: #4CAF50;
+  color: white;
+  text-align: center;
+  border: none;
+  border-radius: 5px;
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 15px;
+  text-decoration: none;
+}
+.button.secondary {
+  background-color: #2196F3;
+}
+.group-list {
+  margin-top: 30px;
+}
+.group-item {
+  background-color: white;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.group-item h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+.expense-list {
+  margin-top: 20px;
+}
+.expense-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #E0E0E0;
+}
+.fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  background-color: #FFC107;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 24px;
+  text-decoration: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+.input-group {
+  margin-bottom: 20px;
+}
+.input-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+.input-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #E0E0E0;
+  border-radius: 5px;
+  font-size: 16px;
 }

@@ -21,6 +21,7 @@ import {
 import { Add as AddIcon, ExitToApp as LogoutIcon } from '@mui/icons-material';
 import { PageContainer, Header, StyledCard, StyledButton } from '../styles/CommonStyles';
 
+
 const HomeScreen = () => {
   const [groups, setGroups] = useState([]);
   const [username, setUsername] = useState('');

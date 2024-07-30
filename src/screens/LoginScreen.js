@@ -1,8 +1,8 @@
-// src/screens/LoginScreen.js
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
+import { Button, TextField, Typography, Container, Paper, Alert } from '@mui/material';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -21,28 +21,41 @@ const LoginScreen = () => {
   };
 
   return (
-    <div className="container">
-      <h1>Login</h1>
-      {error && <p className="error">{error}</p>}
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Login</button>
-      </form>
-      <p>Don't have an account? <Link to="/register">Register</Link></p>
-    </div>
+    <Container component="main" maxWidth="xs">
+      <Paper elevation={3} sx={{ padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Typography component="h1" variant="h5">
+          ログイン
+        </Typography>
+        {error && <Alert severity="error" sx={{ marginTop: 2 }}>{error}</Alert>}
+        <form onSubmit={handleLogin} style={{ width: '100%', marginTop: 1 }}>
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            label="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <Button type="submit" fullWidth variant="contained" color="primary" sx={{ marginTop: 3, marginBottom: 2 }}>
+            ログイン
+          </Button>
+          <Typography variant="body2" color="textSecondary" align="center">
+            アカウントがない場合 <Link to="/register">新規登録</Link>
+          </Typography>
+        </form>
+      </Paper>
+    </Container>
   );
 };
 

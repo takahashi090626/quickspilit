@@ -41,7 +41,7 @@ const UserProfileScreen = () => {
           await uploadBytes(avatarRef, avatar);
           newAvatarUrl = await getDownloadURL(avatarRef);
         }
-
+  
         await updateProfile(user, { displayName: username, photoURL: newAvatarUrl });
         await setDoc(doc(db, 'users', user.uid), { 
           username, 
@@ -59,6 +59,8 @@ const UserProfileScreen = () => {
       }
     }
   };
+  
+  
 
   const handleAvatarChange = (e) => {
     if (e.target.files[0]) {

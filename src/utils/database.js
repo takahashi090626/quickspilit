@@ -8,8 +8,7 @@ import {
     query, 
     where,
     getDoc,
-    arrayUnion,
-    setDoc
+    arrayUnion
   } from 'firebase/firestore';
   import { db } from '../firebaseConfig';
   
@@ -34,7 +33,10 @@ import {
   
   export const addExpense = async (groupId, expenseData) => {
     try {
-      const docRef = await addDoc(collection(db, 'groups', groupId, 'expenses'), expenseData);
+      const docRef = await addDoc(collection(db, 'groups', groupId, 'expenses'), {
+        ...expenseData,
+        paidStatus: {} // 各ユーザーの支払い状態を格納するオブジェクト
+      });
       return docRef.id;
     } catch (error) {
       throw error;
@@ -82,63 +84,32 @@ import {
       throw error;
     }
   };
-  export const inviteUserToGroup = async (groupId, email) => {
+  
+  export const inviteUserToGroup = async (groupId, invitedUserId) => {
     try {
-      const userQuery = query(collection(db, 'users'), where('email', '==', email));
+      const userQuery = query(collection(db, 'users'), where('userId', '==', invitedUserId));
       const userSnapshot = await getDocs(userQuery);
       
       if (userSnapshot.empty) {
-        // ユーザーが存在しない場合、仮のユーザーを作成
-        const newUserRef = doc(collection(db, 'users'));
-        await setDoc(newUserRef, { email, username: email.split('@')[0] });
-        const userId = newUserRef.id;
-        
-        const groupDoc = await getDoc(doc(db, 'groups', groupId));
-        if (!groupDoc.exists()) {
-          throw new Error('グループが見つかりません');
-        }
-        const groupName = groupDoc.data().name;
-        
-        await addDoc(collection(db, 'invitations'), {
-          groupId,
-          groupName,
-          userId,
-          email,
-          status: 'pending'
-        });
-        
-        return { status: 'created', message: '新しいユーザーが作成され、招待が送信されました' };
-      } else {
-        const userId = userSnapshot.docs[0].id;
-        const groupDoc = await getDoc(doc(db, 'groups', groupId));
-        if (!groupDoc.exists()) {
-          throw new Error('グループが見つかりません');
-        }
-        const groupName = groupDoc.data().name;
-        
-        // 既存の招待をチェック
-        const invitationQuery = query(
-          collection(db, 'invitations'),
-          where('groupId', '==', groupId),
-          where('userId', '==', userId),
-          where('status', '==', 'pending')
-        );
-        const invitationSnapshot = await getDocs(invitationQuery);
-        
-        if (!invitationSnapshot.empty) {
-          return { status: 'existing', message: 'このユーザーは既に招待されています' };
-        }
-        
-        await addDoc(collection(db, 'invitations'), {
-          groupId,
-          groupName,
-          userId,
-          email,
-          status: 'pending'
-        });
-        
-        return { status: 'invited', message: '招待が送信されました' };
+        throw new Error('ユーザーが見つかりません');
       }
+      
+      const invitedUser = userSnapshot.docs[0];
+      const invitedUserUid = invitedUser.id;
+  
+      const groupDoc = await getDoc(doc(db, 'groups', groupId));
+      if (!groupDoc.exists()) {
+        throw new Error('グループが見つかりません');
+      }
+  
+      await addDoc(collection(db, 'invitations'), {
+        groupId,
+        groupName: groupDoc.data().name,
+        userId: invitedUserUid,
+        status: 'pending'
+      });
+  
+      return { status: 'success', message: '招待が送信されました' };
     } catch (error) {
       console.error('招待エラー:', error);
       throw error;
@@ -146,6 +117,11 @@ import {
   };
   export const getInvitations = async (user) => {
     try {
+      if (!user || !user.uid) {
+        console.error('Invalid user object');
+        return [];
+      }
+  
       const userIdQuery = query(
         collection(db, 'invitations'), 
         where('userId', '==', user.uid), 
@@ -168,24 +144,22 @@ import {
       return invitations;
     } catch (error) {
       console.error('招待の取得エラー:', error);
-      throw error;
+      return [];
     }
   };
+  
   export const acceptInvitation = async (invitationId, userId) => {
     try {
       const invitationDoc = await getDoc(doc(db, 'invitations', invitationId));
       if (invitationDoc.exists()) {
         const { groupId } = invitationDoc.data();
         
-        // グループにユーザーを追加
         await updateDoc(doc(db, 'groups', groupId), {
           members: arrayUnion(userId)
         });
   
-        // 招待のステータスを更新
         await updateDoc(doc(db, 'invitations', invitationId), { status: 'accepted' });
   
-        // グループの詳細を取得して返す
         const groupDoc = await getDoc(doc(db, 'groups', groupId));
         return { id: groupId, ...groupDoc.data() };
       }
@@ -195,10 +169,12 @@ import {
       throw error;
     }
   };
+  
   export const declineInvitation = async (invitationId) => {
     try {
       await updateDoc(doc(db, 'invitations', invitationId), { status: 'declined' });
     } catch (error) {
+      console.error('招待の拒否エラー:', error);
       throw error;
     }
   };
@@ -211,6 +187,7 @@ import {
       }
       throw new Error('グループが見つかりません');
     } catch (error) {
+      console.error('グループ詳細取得エラー:', error);
       throw error;
     }
   };
@@ -221,6 +198,40 @@ import {
         members: arrayUnion(userId)
       });
     } catch (error) {
+      console.error('グループ参加エラー:', error);
+      throw error;
+    }
+  };
+  
+  export const updateExpensePaidStatus = async (groupId, expenseId, userId, isPaid) => {
+    try {
+      const expenseRef = doc(db, 'groups', groupId, 'expenses', expenseId);
+      await updateDoc(expenseRef, {
+        [`paidStatus.${userId}`]: isPaid
+      });
+    } catch (error) {
+      console.error('支払い状態更新エラー:', error);
+      throw error;
+    }
+  };
+  
+  export const updateUserPaymentStatus = async (groupId, userId, isPaid) => {
+    try {
+      const groupRef = doc(db, 'groups', groupId);
+      await updateDoc(groupRef, {
+        [`memberPaymentStatus.${userId}`]: isPaid
+      });
+    } catch (error) {
+      console.error('ユーザー支払い状態更新エラー:', error);
+      throw error;
+    }
+  };
+  
+  export const deleteGroup = async (groupId) => {
+    try {
+      await deleteDoc(doc(db, 'groups', groupId));
+    } catch (error) {
+      console.error('グループ削除エラー:', error);
       throw error;
     }
   };

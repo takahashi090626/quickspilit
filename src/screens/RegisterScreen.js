@@ -1,61 +1,103 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebaseConfig';
-import { Button, TextField, Typography, Container, Paper, Alert } from '@mui/material';
+import { setDoc, doc, collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db } from '../firebaseConfig';
+import { TextField, Button, Typography, Snackbar, Alert } from '@mui/material';
+import { PageContainer, StyledCard } from '../styles/CommonStyles';
 
 const RegisterScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [userId, setUserId] = useState('');
   const [error, setError] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    setError('');
+
     try {
+      // Check if userId is unique
+      const userQuery = query(collection(db, 'users'), where('userId', '==', userId));
+      const userSnapshot = await getDocs(userQuery);
+      if (!userSnapshot.empty) {
+        setError('このユーザーIDは既に使用されています。');
+        return;
+      }
+
+      // Create user with email and password
       await createUserWithEmailAndPassword(auth, email, password);
-      navigate('/');
+
+      // Add user data to Firestore
+      await setDoc(doc(db, 'users', auth.currentUser.uid), {
+        email,
+        userId,
+        username: userId,
+        createdAt: new Date(),
+      });
+
+      setSnackbar({ open: true, message: 'ユーザー登録が完了しました。ログインしてください。', severity: 'success' });
+      setTimeout(() => navigate('/login'), 2000);
     } catch (error) {
-      setError(error.message);
+      console.error('Registration error:', error);
+      if (error.code === 'auth/email-already-in-use') {
+        setError('このメールアドレスは既に使用されています。');
+      } else {
+        setError(`登録エラー: ${error.message}`);
+      }
+      setSnackbar({ open: true, message: 'ユーザー登録に失敗しました', severity: 'error' });
     }
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper elevation={3} sx={{ padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Typography component="h1" variant="h5">
-          新規登録
-        </Typography>
-        {error && <Alert severity="error" sx={{ marginTop: 2 }}>{error}</Alert>}
-        <form onSubmit={handleRegister} style={{ width: '100%', marginTop: 1 }}>
+    <PageContainer>
+      <StyledCard sx={{ maxWidth: 400, margin: 'auto', mt: 4 }}>
+        <Typography variant="h4" gutterBottom>ユーザー登録</Typography>
+        {error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
+        <form onSubmit={handleRegister}>
           <TextField
-            variant="outlined"
-            margin="normal"
-            required
             fullWidth
-            label="Email"
+            label="メールアドレス"
+            type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-          />
-          <TextField
-            variant="outlined"
             margin="normal"
             required
+          />
+          <TextField
             fullWidth
-            label="Password"
+            label="ユーザーID"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            margin="normal"
+            required
+          />
+          <TextField
+            fullWidth
+            label="パスワード"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            margin="normal"
+            required
           />
-          <Button type="submit" fullWidth variant="contained" color="primary" sx={{ marginTop: 3, marginBottom: 2 }}>
-            新規登録
+          <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
+            登録
           </Button>
-          <Typography variant="body2" color="textSecondary" align="center">
-            既にアカウントをお持ちの場合 <Link to="/login">ログイン</Link>
-          </Typography>
         </form>
-      </Paper>
-    </Container>
+      </StyledCard>
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </PageContainer>
   );
 };
 

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebaseConfig';
-import { Button, TextField, Typography, Container, Paper, Alert } from '@mui/material';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db } from '../firebaseConfig';
+import { TextField, Button, Typography, Box } from '@mui/material';
+import { PageContainer, StyledCard } from '../styles/CommonStyles';
 
 const LoginScreen = () => {
-  const [email, setEmail] = useState('');
+  const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -13,49 +15,71 @@ const LoginScreen = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      // ユーザーIDからメールアドレスを取得
+      const userQuery = query(collection(db, 'users'), where('userId', '==', userId));
+      const userSnapshot = await getDocs(userQuery);
+      
+      if (userSnapshot.empty) {
+        setError('ユーザーが見つかりません。');
+        return;
+      }
+
+      const userDoc = userSnapshot.docs[0];
+      const email = userDoc.data().email;
+
+      // メールアドレスとパスワードでログイン
       await signInWithEmailAndPassword(auth, email, password);
       navigate('/');
     } catch (error) {
-      setError(error.message);
+      console.error("Login error:", error);
+      setError('ログインに失敗しました。ユーザーIDとパスワードを確認してください。');
     }
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper elevation={3} sx={{ padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Typography component="h1" variant="h5">
-          ログイン
-        </Typography>
-        {error && <Alert severity="error" sx={{ marginTop: 2 }}>{error}</Alert>}
-        <form onSubmit={handleLogin} style={{ width: '100%', marginTop: 1 }}>
+    <PageContainer>
+      <StyledCard>
+        <Box component="form" onSubmit={handleLogin} sx={{ mt: 1 }}>
+          <Typography variant="h4" gutterBottom>ログイン</Typography>
+          {error && <Typography color="error">{error}</Typography>}
           <TextField
-            variant="outlined"
             margin="normal"
             required
             fullWidth
-            label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            id="userId"
+            label="ユーザーID"
+            name="userId"
+            autoComplete="username"
+            autoFocus
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
           />
           <TextField
-            variant="outlined"
             margin="normal"
             required
             fullWidth
-            label="Password"
+            name="password"
+            label="パスワード"
             type="password"
+            id="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <Button type="submit" fullWidth variant="contained" color="primary" sx={{ marginTop: 3, marginBottom: 2 }}>
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{ mt: 3, mb: 2 }}
+          >
             ログイン
           </Button>
-          <Typography variant="body2" color="textSecondary" align="center">
-            アカウントがない場合 <Link to="/register">新規登録</Link>
+          <Typography>
+            アカウントをお持ちでない方は <Link to="/register">こちらから新規登録</Link>
           </Typography>
-        </form>
-      </Paper>
-    </Container>
+        </Box>
+      </StyledCard>
+    </PageContainer>
   );
 };
 

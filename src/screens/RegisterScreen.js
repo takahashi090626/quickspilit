@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { setDoc, doc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import { TextField, Button, Typography, Snackbar, Alert } from '@mui/material';
-import { PageContainer, StyledCard } from '../styles/CommonStyles';
+import { GradientBackground, GlassCard, StyledButton } from '../styles/CommonStyles';
 
 const RegisterScreen = () => {
   const [email, setEmail] = useState('');
@@ -19,7 +19,6 @@ const RegisterScreen = () => {
     setError('');
 
     try {
-      // Check if userId is unique
       const userQuery = query(collection(db, 'users'), where('userId', '==', userId));
       const userSnapshot = await getDocs(userQuery);
       if (!userSnapshot.empty) {
@@ -27,10 +26,8 @@ const RegisterScreen = () => {
         return;
       }
 
-      // Create user with email and password
       await createUserWithEmailAndPassword(auth, email, password);
 
-      // Add user data to Firestore
       await setDoc(doc(db, 'users', auth.currentUser.uid), {
         email,
         userId,
@@ -52,9 +49,9 @@ const RegisterScreen = () => {
   };
 
   return (
-    <PageContainer>
-      <StyledCard sx={{ maxWidth: 400, margin: 'auto', mt: 4 }}>
-        <Typography variant="h4" gutterBottom>ユーザー登録</Typography>
+    <GradientBackground>
+      <GlassCard>
+        <Typography variant="h4" gutterBottom sx={{ color: '#333', fontWeight: 'bold' }}>ユーザー登録</Typography>
         {error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
         <form onSubmit={handleRegister}>
           <TextField
@@ -83,11 +80,14 @@ const RegisterScreen = () => {
             margin="normal"
             required
           />
-          <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
+          <StyledButton type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
             登録
-          </Button>
+          </StyledButton>
         </form>
-      </StyledCard>
+        <Typography sx={{ textAlign: 'center', mt: 2 }}>
+          既にアカウントをお持ちの方は <Link to="/login" style={{ color: '#3f51b5', fontWeight: 'bold' }}>こちらからログイン</Link>
+        </Typography>
+      </GlassCard>
       <Snackbar 
         open={snackbar.open} 
         autoHideDuration={6000} 
@@ -97,7 +97,7 @@ const RegisterScreen = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </PageContainer>
+    </GradientBackground>
   );
 };
 

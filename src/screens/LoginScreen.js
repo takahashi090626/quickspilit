@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import { TextField, Button, Typography, Box } from '@mui/material';
-import { PageContainer, StyledCard } from '../styles/CommonStyles';
+import { GradientBackground, GlassCard, StyledButton } from '../styles/CommonStyles';
 
 const LoginScreen = () => {
   const [userId, setUserId] = useState('');
@@ -15,7 +15,6 @@ const LoginScreen = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // ユーザーIDからメールアドレスを取得
       const userQuery = query(collection(db, 'users'), where('userId', '==', userId));
       const userSnapshot = await getDocs(userQuery);
       
@@ -27,7 +26,6 @@ const LoginScreen = () => {
       const userDoc = userSnapshot.docs[0];
       const email = userDoc.data().email;
 
-      // メールアドレスとパスワードでログイン
       await signInWithEmailAndPassword(auth, email, password);
       navigate('/');
     } catch (error) {
@@ -37,11 +35,11 @@ const LoginScreen = () => {
   };
 
   return (
-    <PageContainer>
-      <StyledCard>
+    <GradientBackground>
+      <GlassCard>
         <Box component="form" onSubmit={handleLogin} sx={{ mt: 1 }}>
-          <Typography variant="h4" gutterBottom>ログイン</Typography>
-          {error && <Typography color="error">{error}</Typography>}
+          <Typography variant="h4" gutterBottom sx={{ color: '#333', fontWeight: 'bold' }}>ログイン</Typography>
+          {error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
           <TextField
             margin="normal"
             required
@@ -66,20 +64,20 @@ const LoginScreen = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <Button
+          <StyledButton
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
           >
             ログイン
-          </Button>
-          <Typography>
-            アカウントをお持ちでない方は <Link to="/register">こちらから新規登録</Link>
+          </StyledButton>
+          <Typography sx={{ textAlign: 'center', mt: 2 }}>
+            アカウントをお持ちでない方は <Link to="/register" style={{ color: '#3f51b5', fontWeight: 'bold' }}>こちらから新規登録</Link>
           </Typography>
         </Box>
-      </StyledCard>
-    </PageContainer>
+      </GlassCard>
+    </GradientBackground>
   );
 };
 

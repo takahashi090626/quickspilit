@@ -78,19 +78,7 @@ const ExpenseInput = ({ groupId }) => {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
-        <FormControl fullWidth variant="outlined" margin="normal">
-          <InputLabel>カテゴリー</InputLabel>
-          <Select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            label="Category"
-          >
-            <MenuItem value="food">食べ物</MenuItem>
-            <MenuItem value="transportation">交通機関</MenuItem>
-            <MenuItem value="accommodation">宿泊代</MenuItem>
-            <MenuItem value="other">その他</MenuItem>
-          </Select>
-        </FormControl>
+        
         <SubmitButton
           fullWidth
           variant="contained"

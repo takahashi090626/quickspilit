@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { updateExpensePaidStatus, updateUserPaymentStatus, inviteUserToGroup } from '../utils/database';
+import { useParams, useNavigate } from 'react-router-dom';
+import { updateExpensePaidStatus, updateUserPaymentStatus, inviteUserToGroup, deleteExpense } from '../utils/database';
 import ExpenseInput from '../components/ExpenseInput';
 import SettlementSummary from '../components/SettlementSummary';
 import QRCode from 'qrcode.react';
 import { Typography, Avatar, Dialog, DialogTitle, DialogContent, TextField, List, ListItem, ListItemAvatar, ListItemText, Grid, CardContent, Box, Chip, Card, CardHeader, CardActions, IconButton, Collapse, Snackbar, Alert } from '@mui/material';
-import { Add as AddIcon, Share as ShareIcon, PanTool as PanToolIcon, CheckCircle as CheckCircleIcon, ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import { Add as AddIcon, Share as ShareIcon, PanTool as PanToolIcon, CheckCircle as CheckCircleIcon, ExpandMore as ExpandMoreIcon, Delete as DeleteIcon, Home as HomeIcon } from '@mui/icons-material';
 import { PageContainer, Header, StyledButton } from '../styles/CommonStyles';
 import { onSnapshot, doc, collection, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
@@ -20,6 +20,7 @@ const GroupScreen = () => {
   const [expandedCard, setExpandedCard] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const { groupId } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribeGroup = onSnapshot(doc(db, 'groups', groupId), (docSnapshot) => {
@@ -82,20 +83,14 @@ const GroupScreen = () => {
     }
   };
 
-  const handleToggleUserPaymentStatus = async (userId) => {
-    const member = members.find(m => m.id === userId);
-    const currentStatus = member.paymentStatus || false;
-    await updateUserPaymentStatus(groupId, userId, !currentStatus);
-    
-    setMembers(members.map(m => {
-      if (m.id === userId) {
-        return {
-          ...m,
-          paymentStatus: !currentStatus
-        };
-      }
-      return m;
-    }));
+  const handleDeleteExpense = async (expenseId) => {
+    try {
+      await deleteExpense(groupId, expenseId);
+      setSnackbar({ open: true, message: '支出を削除しました', severity: 'success' });
+    } catch (error) {
+      console.error('支出の削除エラー:', error);
+      setSnackbar({ open: true, message: '支出の削除に失敗しました', severity: 'error' });
+    }
   };
 
   const handleExpandClick = (cardId) => {
@@ -107,8 +102,8 @@ const GroupScreen = () => {
       <Header>
         <Typography variant="h4" gutterBottom>{groupName}</Typography>
         <Box>
-          <StyledButton startIcon={<ShareIcon />} onClick={handleShareQR} sx={{ mr: 2 }}>
-            QRコードを共有
+          <StyledButton startIcon={<HomeIcon />} onClick={() => navigate('/')} sx={{ mr: 2 }}>
+            ホームに戻る
           </StyledButton>
           <StyledButton startIcon={<AddIcon />} onClick={() => setInviteDialogOpen(true)}>
             メンバーを招待
@@ -128,12 +123,6 @@ const GroupScreen = () => {
                       <Avatar src={member.avatarUrl} />
                     </ListItemAvatar>
                     <ListItemText primary={member.username} />
-                    <Chip
-                      icon={member.paymentStatus ? <CheckCircleIcon /> : <PanToolIcon />}
-                      label={member.paymentStatus ? "支払い済み" : "未払い"}
-                      color={member.paymentStatus ? "primary" : "default"}
-                      onClick={() => handleToggleUserPaymentStatus(member.id)}
-                    />
                   </ListItem>
                 ))}
               </List>
@@ -157,6 +146,11 @@ const GroupScreen = () => {
                 <CardHeader
                   title={expense.description}
                   subheader={`金額: ¥${expense.amount} `}
+                  action={
+                    <IconButton onClick={() => handleDeleteExpense(expense.id)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  }
                 />
                 <CardActions disableSpacing>
                   <IconButton
@@ -188,13 +182,13 @@ const GroupScreen = () => {
           </Box>
         </Grid>
       </Grid>
-
+{/* 
       <Dialog open={qrDialogOpen} onClose={() => setQrDialogOpen(false)}>
         <DialogTitle>グループ招待QRコード</DialogTitle>
         <DialogContent>
           <QRCode value={`https://quickaplit.web.app/group/${groupId}`} size={256} />
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
       <Dialog open={inviteDialogOpen} onClose={() => setInviteDialogOpen(false)}>
         <DialogTitle>メンバーを招待</DialogTitle>
@@ -203,7 +197,7 @@ const GroupScreen = () => {
             autoFocus
             margin="dense"
             label="ユーザーID"
-            type="email"
+            type="text"
             fullWidth
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}

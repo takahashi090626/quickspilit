@@ -21,7 +21,10 @@ import {
   Alert
 } from '@mui/material';
 import { Add as AddIcon, ExitToApp as LogoutIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { PageContainer, Header, StyledCard, StyledButton } from '../styles/CommonStyles';
+import { PageContainer, Header, StyledCard, StyledButton,InvitationCard, 
+  InvitationContent, 
+  InvitationActions, 
+  InvitationButton  } from '../styles/CommonStyles';
 
 const HomeScreen = () => {
   const [groups, setGroups] = useState([]);
@@ -135,24 +138,35 @@ const HomeScreen = () => {
       </Header>
 
       {invitations.length > 0 && (
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>招待</Typography>
+        <Box sx={{ mb: 4, width: '100%', maxWidth: '1200px' }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>招待</Typography>
           <Grid container spacing={2}>
             {invitations.map((invitation) => (
               <Grid item xs={12} sm={6} md={4} key={invitation.id}>
-                <StyledCard>
-                  <CardContent>
-                    <Typography variant="body1">{invitation.groupName}グループからの招待</Typography>
-                  </CardContent>
-                  <CardActions>
-                    <StyledButton size="small" color="primary" onClick={() => handleAcceptInvitation(invitation.id)}>
+                <InvitationCard>
+                  <InvitationContent>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>{invitation.groupName}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      グループからの招待が届いています。参加しますか？
+                    </Typography>
+                  </InvitationContent>
+                  <InvitationActions>
+                    <InvitationButton 
+                      size="small" 
+                      color="primary" 
+                      onClick={() => handleAcceptInvitation(invitation.id)}
+                    >
                       参加する
-                    </StyledButton>
-                    <StyledButton size="small" color="secondary" onClick={() => handleDeclineInvitation(invitation.id)}>
+                    </InvitationButton>
+                    <InvitationButton 
+                      size="small" 
+                      color="secondary" 
+                      onClick={() => handleDeclineInvitation(invitation.id)}
+                    >
                       断る
-                    </StyledButton>
-                  </CardActions>
-                </StyledCard>
+                    </InvitationButton>
+                  </InvitationActions>
+                </InvitationCard>
               </Grid>
             ))}
           </Grid>

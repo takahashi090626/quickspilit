@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { updateExpensePaidStatus, updateUserPaymentStatus, inviteUserToGroup, deleteExpense } from '../utils/database';
+import { updateExpensePaidStatus, updateUserPaymentStatus, inviteUserToGroup, deleteExpense,searchUsers } from '../utils/database';
 import ExpenseInput from '../components/ExpenseInput';
 import SettlementSummary from '../components/SettlementSummary';
 import QRCode from 'qrcode.react';
-import { Typography, Avatar, Dialog, DialogTitle, DialogContent, TextField, List, ListItem, ListItemAvatar, ListItemText, Grid, CardContent, Box, Chip, Card, CardHeader, CardActions, IconButton, Collapse, Snackbar, Alert } from '@mui/material';
+import { Typography, Avatar, Dialog, DialogTitle, DialogContent, TextField, List, ListItem, ListItemAvatar, ListItemText, Grid, CardContent, Box, Chip, Card, CardHeader, CardActions, IconButton, Collapse, Snackbar, Alert,Autocomplete  } from '@mui/material';
 import { Add as AddIcon, Share as ShareIcon, PanTool as PanToolIcon, CheckCircle as CheckCircleIcon, ExpandMore as ExpandMoreIcon, Delete as DeleteIcon, Home as HomeIcon } from '@mui/icons-material';
 import { PageContainer, Header, StyledButton } from '../styles/CommonStyles';
 import { onSnapshot, doc, collection, getDoc } from 'firebase/firestore';
@@ -20,6 +20,9 @@ const GroupScreen = () => {
   const [expandedCard, setExpandedCard] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const { groupId } = useParams();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,16 +61,35 @@ const GroupScreen = () => {
   const handleShareQR = () => {
     setQrDialogOpen(true);
   };
+  const handleSearchUser = async (value) => {
+    setSearchTerm(value);
+    if (value.length >= 2) {
+      try {
+        const results = await searchUsers(value);
+        setSearchResults(results);
+      } catch (error) {
+        console.error('ユーザー検索エラー:', error);
+        setSnackbar({ open: true, message: 'ユーザーの検索中にエラーが発生しました', severity: 'error' });
+      }
+    } else {
+      setSearchResults([]);
+    }
+  };
 
   const handleInvite = async () => {
-    try {
-      const result = await inviteUserToGroup(groupId, inviteEmail);
-      setSnackbar({ open: true, message: result.message, severity: 'success' });
-      setInviteDialogOpen(false);
-      setInviteEmail('');
-    } catch (error) {
-      console.error('招待エラー:', error);
-      setSnackbar({ open: true, message: '招待の送信に失敗しました: ' + error.message, severity: 'error' });
+    if (selectedUser) {
+      try {
+        const result = await inviteUserToGroup(groupId, selectedUser.id);
+        setSnackbar({ open: true, message: result.message, severity: 'success' });
+        setInviteDialogOpen(false);
+        setSelectedUser(null);
+        setSearchTerm('');
+      } catch (error) {
+        console.error('招待エラー:', error);
+        setSnackbar({ open: true, message: `招待の送信に失敗しました: ${error.message}`, severity: 'error' });
+      }
+    } else {
+      setSnackbar({ open: true, message: 'ユーザーを選択してください', severity: 'warning' });
     }
   };
 
@@ -190,21 +212,52 @@ const GroupScreen = () => {
         </DialogContent>
       </Dialog> */}
 
-      <Dialog open={inviteDialogOpen} onClose={() => setInviteDialogOpen(false)}>
+<Dialog 
+        open={inviteDialogOpen} 
+        onClose={() => setInviteDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>メンバーを招待</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="ユーザーID"
-            type="text"
-            fullWidth
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
+          <Autocomplete
+            options={searchResults}
+            getOptionLabel={(option) => option.userId}
+            renderOption={(props, option) => (
+              <ListItem {...props}>
+                <ListItemAvatar>
+                  <Avatar src={option.avatarUrl} />
+                </ListItemAvatar>
+                <ListItemText primary={option.userId} secondary={option.username} />
+              </ListItem>
+            )}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="ユーザーIDを検索"
+                variant="outlined"
+                fullWidth
+                onChange={(e) => handleSearchUser(e.target.value)}
+              />
+            )}
+            value={selectedUser}
+            onChange={(event, newValue) => {
+              setSelectedUser(newValue);
+            }}
+            ListboxProps={{
+              style: { maxHeight: 200, overflow: 'auto' }
+            }}
           />
-          <StyledButton onClick={handleInvite} color="primary">
-            招待を送信
-          </StyledButton>
+          <Box sx={{ mt: 2 }}>
+            <StyledButton 
+              onClick={handleInvite} 
+              color="primary" 
+              disabled={!selectedUser}
+              fullWidth
+            >
+              招待を送信
+            </StyledButton>
+          </Box>
         </DialogContent>
       </Dialog>
 

@@ -8,7 +8,8 @@ import {
     query, 
     where,
     getDoc,
-    arrayUnion
+    arrayUnion,
+    limit
   } from 'firebase/firestore';
   import { db } from '../firebaseConfig';
   
@@ -85,34 +86,54 @@ import {
     }
   };
   
-  export const inviteUserToGroup = async (groupId, invitedUserId) => {
+  export const inviteUserToGroup = async (groupId, userId) => {
     try {
-      const userQuery = query(collection(db, 'users'), where('userId', '==', invitedUserId));
-      const userSnapshot = await getDocs(userQuery);
+      // グループドキュメントの参照を取得
+      const groupRef = doc(db, 'groups', groupId);
       
-      if (userSnapshot.empty) {
-        throw new Error('ユーザーが見つかりません');
-      }
+      // グループドキュメントを取得
+      const groupDoc = await getDoc(groupRef);
       
-      const invitedUser = userSnapshot.docs[0];
-      const invitedUserUid = invitedUser.id;
-  
-      const groupDoc = await getDoc(doc(db, 'groups', groupId));
       if (!groupDoc.exists()) {
-        throw new Error('グループが見つかりません');
+        throw new Error('指定されたグループが存在しません。');
       }
-  
-      await addDoc(collection(db, 'invitations'), {
+      
+      // ユーザードキュメントの参照を取得
+      const userRef = doc(db, 'users', userId);
+      
+      // ユーザードキュメントを取得
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        throw new Error('指定されたユーザーが存在しません。');
+      }
+      
+      // 既存の招待をチェック
+      const invitationsRef = collection(db, 'invitations');
+      const q = query(invitationsRef, 
+        where('groupId', '==', groupId),
+        where('userId', '==', userId),
+        where('status', '==', 'pending')
+      );
+      const existingInvitations = await getDocs(q);
+      
+      if (!existingInvitations.empty) {
+        return { message: 'このユーザーは既に招待されています。' };
+      }
+      
+      // 新しい招待を作成
+      await addDoc(invitationsRef, {
         groupId,
+        userId,
         groupName: groupDoc.data().name,
-        userId: invitedUserUid,
-        status: 'pending'
+        status: 'pending',
+        createdAt: new Date()
       });
-  
-      return { status: 'success', message: '招待が送信されました' };
+      
+      return { message: 'ユーザーに招待を送信しました。' };
     } catch (error) {
       console.error('招待エラー:', error);
-      throw error;
+      throw new Error(`ユーザーの招待に失敗しました: ${error.message}`);
     }
   };
   export const getInvitations = async (user) => {
@@ -233,6 +254,26 @@ import {
     } catch (error) {
       console.error('グループ削除エラー:', error);
       throw error;
+    }
+  };
+  export const searchUsers = async (searchTerm) => {
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(
+        usersRef,
+        where('userId', '>=', searchTerm),
+        where('userId', '<=', searchTerm + '\uf8ff'),
+        limit(10) // 結果の数を制限
+      );
+  
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('ユーザー検索エラー:', error);
+      throw new Error('ユーザーの検索中にエラーが発生しました。');
     }
   };
   

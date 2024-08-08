@@ -142,7 +142,6 @@ const GroupScreen = () => {
 
           <Box sx={{ mt: 3 }}>
             <Card>
-              <CardHeader title="概算サマリー" />
               <CardContent>
                 <SettlementSummary expenses={expenses} members={members} />
               </CardContent>
@@ -193,7 +192,7 @@ const GroupScreen = () => {
       <Dialog open={qrDialogOpen} onClose={() => setQrDialogOpen(false)}>
         <DialogTitle>グループ招待QRコード</DialogTitle>
         <DialogContent>
-          <QRCode value={`https://yourapp.com/join/${groupId}`} size={256} />
+          <QRCode value={`https://quickaplit.web.app/group/${groupId}`} size={256} />
         </DialogContent>
       </Dialog>
 
@@ -203,7 +202,7 @@ const GroupScreen = () => {
           <TextField
             autoFocus
             margin="dense"
-            label="メールアドレス"
+            label="ユーザーID"
             type="email"
             fullWidth
             value={inviteEmail}

@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { getGroups, getInvitations, acceptInvitation, declineInvitation, createGroup, deleteGroup } from '../utils/database';
-import { signOut } from '../utils/auth';
-import { auth, db } from '../firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { auth } from '../firebaseConfig';
 import { 
   Typography, 
-  Avatar, 
   Grid, 
   IconButton, 
   Dialog, 
@@ -20,123 +17,90 @@ import {
   Snackbar,
   Alert
 } from '@mui/material';
-import { Add as AddIcon, ExitToApp as LogoutIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { PageContainer, Header, StyledCard, StyledButton,InvitationCard, 
+import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { PageContainer, StyledCard, StyledButton, InvitationCard, 
   InvitationContent, 
   InvitationActions, 
-  InvitationButton  } from '../styles/CommonStyles';
+  InvitationButton } from '../styles/CommonStyles';
 
-const HomeScreen = () => {
-  const [groups, setGroups] = useState([]);
-  const [username, setUsername] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
-  const [invitations, setInvitations] = useState([]);
-  const [openCreateGroupDialog, setOpenCreateGroupDialog] = useState(false);
-  const [newGroupName, setNewGroupName] = useState('');
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchUserData = async () => {
+  const HomeScreen = () => {
+    const [groups, setGroups] = useState([]);
+    const [invitations, setInvitations] = useState([]);
+    const [openCreateGroupDialog, setOpenCreateGroupDialog] = useState(false);
+    const [newGroupName, setNewGroupName] = useState('');
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  
+    useEffect(() => {
+      const fetchUserData = async () => {
+        try {
+          const user = auth.currentUser;
+          if (user) {
+            const fetchedGroups = await getGroups(user.uid);
+            setGroups(fetchedGroups);
+            const fetchedInvitations = await getInvitations(user);
+            setInvitations(fetchedInvitations);
+          }
+        } catch (error) {
+          console.error('ユーザーデータの取得エラー:', error);
+          setSnackbar({ open: true, message: 'データの取得に失敗しました', severity: 'error' });
+        }
+      };
+  
+      fetchUserData();
+    }, []);
+  
+    const handleAcceptInvitation = async (invitationId) => {
       try {
         const user = auth.currentUser;
-        if (user) {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            setUsername(userDoc.data().username || '名無しさん');
-            setAvatarUrl(userDoc.data().avatarUrl || user.photoURL || '');
-          } else {
-            setUsername('名無しさん');
-          }
-          const fetchedGroups = await getGroups(user.uid);
-          setGroups(fetchedGroups);
-          const fetchedInvitations = await getInvitations(user);
-          setInvitations(fetchedInvitations);
-        }
+        const newGroup = await acceptInvitation(invitationId, user.uid);
+        setInvitations(invitations.filter(inv => inv.id !== invitationId));
+        setGroups(prevGroups => [...prevGroups, newGroup]);
+        setSnackbar({ open: true, message: 'グループに参加しました', severity: 'success' });
       } catch (error) {
-        console.error('ユーザーデータの取得エラー:', error);
-        setSnackbar({ open: true, message: 'データの取得に失敗しました', severity: 'error' });
+        console.error('招待の受諾に失敗しました:', error);
+        setSnackbar({ open: true, message: '招待の受諾に失敗しました', severity: 'error' });
       }
     };
-
-    fetchUserData();
-  }, []);
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/login');
-    } catch (error) {
-      console.error('ログアウトエラー:', error);
-      setSnackbar({ open: true, message: 'ログアウトに失敗しました', severity: 'error' });
-    }
-  };
-
-  const handleAcceptInvitation = async (invitationId) => {
-    try {
-      const user = auth.currentUser;
-      const newGroup = await acceptInvitation(invitationId, user.uid);
-      setInvitations(invitations.filter(inv => inv.id !== invitationId));
-      setGroups(prevGroups => [...prevGroups, newGroup]);
-      setSnackbar({ open: true, message: 'グループに参加しました', severity: 'success' });
-    } catch (error) {
-      console.error('招待の受諾に失敗しました:', error);
-      setSnackbar({ open: true, message: '招待の受諾に失敗しました', severity: 'error' });
-    }
-  };
-
-  const handleDeclineInvitation = async (invitationId) => {
-    try {
-      await declineInvitation(invitationId);
-      setInvitations(invitations.filter(inv => inv.id !== invitationId));
-      setSnackbar({ open: true, message: '招待を断りました', severity: 'info' });
-    } catch (error) {
-      console.error('招待の拒否に失敗しました:', error);
-      setSnackbar({ open: true, message: '招待の拒否に失敗しました', severity: 'error' });
-    }
-  };
-
-  const handleCreateGroup = async () => {
-    try {
-      await createGroup({ name: newGroupName, members: [auth.currentUser.uid] });
-      setOpenCreateGroupDialog(false);
-      setNewGroupName('');
-      const fetchedGroups = await getGroups(auth.currentUser.uid);
-      setGroups(fetchedGroups);
-      setSnackbar({ open: true, message: '新しいグループを作成しました', severity: 'success' });
-    } catch (error) {
-      console.error('グループの作成に失敗しました:', error);
-      setSnackbar({ open: true, message: 'グループの作成に失敗しました', severity: 'error' });
-    }
-  };
-
-  const handleDeleteGroup = async (groupId) => {
-    if (window.confirm('本当にこのグループを削除しますか？')) {
+  
+    const handleDeclineInvitation = async (invitationId) => {
       try {
-        await deleteGroup(groupId);
-        setGroups(groups.filter(group => group.id !== groupId));
-        setSnackbar({ open: true, message: 'グループを削除しました', severity: 'success' });
+        await declineInvitation(invitationId);
+        setInvitations(invitations.filter(inv => inv.id !== invitationId));
+        setSnackbar({ open: true, message: '招待を断りました', severity: 'info' });
       } catch (error) {
-        console.error('グループの削除に失敗しました:', error);
-        setSnackbar({ open: true, message: 'グループの削除に失敗しました', severity: 'error' });
+        console.error('招待の拒否に失敗しました:', error);
+        setSnackbar({ open: true, message: '招待の拒否に失敗しました', severity: 'error' });
       }
-    }
-  };
-
+    };
+  
+    const handleCreateGroup = async () => {
+      try {
+        await createGroup({ name: newGroupName, members: [auth.currentUser.uid] });
+        setOpenCreateGroupDialog(false);
+        setNewGroupName('');
+        const fetchedGroups = await getGroups(auth.currentUser.uid);
+        setGroups(fetchedGroups);
+        setSnackbar({ open: true, message: '新しいグループを作成しました', severity: 'success' });
+      } catch (error) {
+        console.error('グループの作成に失敗しました:', error);
+        setSnackbar({ open: true, message: 'グループの作成に失敗しました', severity: 'error' });
+      }
+    };
+  
+    const handleDeleteGroup = async (groupId) => {
+      if (window.confirm('本当にこのグループを削除しますか？')) {
+        try {
+          await deleteGroup(groupId);
+          setGroups(groups.filter(group => group.id !== groupId));
+          setSnackbar({ open: true, message: 'グループを削除しました', severity: 'success' });
+        } catch (error) {
+          console.error('グループの削除に失敗しました:', error);
+          setSnackbar({ open: true, message: 'グループの削除に失敗しました', severity: 'error' });
+        }
+      }
+    };
   return (
     <PageContainer>
-      <Header>
-        <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/profile')}>
-          <Avatar src={avatarUrl} sx={{ width: 50, height: 50, mr: 2 }} />
-          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>{username}</Typography>
-        </Box>
-        <Box>
-          <IconButton onClick={handleSignOut} color="error">
-            <LogoutIcon />
-          </IconButton>
-        </Box>
-      </Header>
-
       {invitations.length > 0 && (
         <Box sx={{ mb: 4, width: '100%', maxWidth: '1200px' }}>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>招待</Typography>

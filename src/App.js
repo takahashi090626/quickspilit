@@ -12,7 +12,8 @@ import SettlementScreen from './screens/SettlementScreen';
 import UserProfileScreen from './screens/UserProfileScreen';
 import { auth } from './firebaseConfig';
 import theme from './styles/theme';
-import QRCodeJoinFlow  from './components/QRCodeScanner'
+import QRCodeJoinFlow from './components/QRCodeScanner';
+import Header from './components/Header';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -35,6 +36,7 @@ const App = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
+        {user && <Header />}
         <Routes>
           <Route path="/login" element={user ? <Navigate to="/" /> : <LoginScreen />} />
           <Route path="/register" element={user ? <Navigate to="/" /> : <RegisterScreen />} />
@@ -43,8 +45,7 @@ const App = () => {
           <Route path="/add-expense/:groupId" element={user ? <AddExpenseScreen /> : <Navigate to="/login" />} />
           <Route path="/settlement/:groupId" element={user ? <SettlementScreen /> : <Navigate to="/login" />} />
           <Route path="/profile" element={user ? <UserProfileScreen /> : <Navigate to="/login" />} />
-          <Route path="/join/:groupId?" element={<QRCodeJoinFlow />} />
-
+          <Route path="/join/:groupId?" element={user ? <QRCodeJoinFlow /> : <Navigate to="/login" />} />
         </Routes>
       </Router>
     </ThemeProvider>

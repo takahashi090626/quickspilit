@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { updateExpensePaidStatus, updateUserPaymentStatus, inviteUserToGroup, deleteExpense, searchUsers } from '../utils/database';
+import { updateExpensePaidStatus, inviteUserToGroup, deleteExpense, searchUsers } from '../utils/database';
 import ExpenseInput from '../components/ExpenseInput';
 import SettlementSummary from '../components/SettlementSummary';
 import QRCode from 'qrcode.react';
 import { Typography, Avatar, Dialog, DialogTitle, DialogContent, TextField, List, ListItem, ListItemAvatar, ListItemText, Grid, CardContent, Box, Chip, Card, CardHeader, CardActions, IconButton, Collapse, Snackbar, Alert, Autocomplete } from '@mui/material';
-import { Add as AddIcon, Share as ShareIcon, PanTool as PanToolIcon, CheckCircle as CheckCircleIcon, ExpandMore as ExpandMoreIcon, Delete as DeleteIcon, Home as HomeIcon, QrCode as QrCodeIcon } from '@mui/icons-material';
+import { Add as AddIcon, PanTool as PanToolIcon, CheckCircle as CheckCircleIcon, ExpandMore as ExpandMoreIcon, Delete as DeleteIcon, Home as HomeIcon, QrCode as QrCodeIcon } from '@mui/icons-material';
 import { PageContainer, Header, StyledButton } from '../styles/CommonStyles';
 import { onSnapshot, doc, collection, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
@@ -16,11 +16,9 @@ const GroupScreen = () => {
   const [groupName, setGroupName] = useState('');
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
   const [expandedCard, setExpandedCard] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const { groupId } = useParams();
-  const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const navigate = useNavigate();
@@ -61,8 +59,8 @@ const GroupScreen = () => {
   const handleShareQR = () => {
     setQrDialogOpen(true);
   };
+
   const handleSearchUser = async (value) => {
-    setSearchTerm(value);
     if (value.length >= 2) {
       try {
         const results = await searchUsers(value);
@@ -83,7 +81,6 @@ const GroupScreen = () => {
         setSnackbar({ open: true, message: result.message, severity: 'success' });
         setInviteDialogOpen(false);
         setSelectedUser(null);
-        setSearchTerm('');
       } catch (error) {
         console.error('招待エラー:', error);
         setSnackbar({ open: true, message: `招待の送信に失敗しました: ${error.message}`, severity: 'error' });
@@ -208,20 +205,19 @@ const GroupScreen = () => {
         </Grid>
       </Grid>
 
-      
       <Dialog open={qrDialogOpen} onClose={() => setQrDialogOpen(false)}>
-  <DialogTitle>グループ招待QRコード</DialogTitle>
-  <DialogContent>
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <QRCode value={`https://quickaplit.web.app/join/${groupId}`} size={256} />
-      <Typography variant="body2" sx={{ mt: 2 }}>
-        このQRコードをスキャンしてグループに参加できます。
-      </Typography>
-    </Box>
-  </DialogContent>
-</Dialog>
+        <DialogTitle>グループ招待QRコード</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <QRCode value={`https://quickaplit.web.app/join/${groupId}`} size={256} />
+            <Typography variant="body2" sx={{ mt: 2 }}>
+              このQRコードをスキャンしてグループに参加できます。
+            </Typography>
+          </Box>
+        </DialogContent>
+      </Dialog>
 
-<Dialog 
+      <Dialog 
         open={inviteDialogOpen} 
         onClose={() => setInviteDialogOpen(false)}
         maxWidth="sm"

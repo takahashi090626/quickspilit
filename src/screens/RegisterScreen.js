@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { setDoc, doc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
-import { TextField, Button, Typography, Snackbar, Alert } from '@mui/material';
+import { TextField, Typography, Snackbar, Alert } from '@mui/material';
 import { GradientBackground, GlassCard, StyledButton } from '../styles/CommonStyles';
 
 const RegisterScreen = () => {

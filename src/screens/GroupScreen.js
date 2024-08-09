@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { updateExpensePaidStatus, updateUserPaymentStatus, inviteUserToGroup, deleteExpense,searchUsers } from '../utils/database';
+import { updateExpensePaidStatus, updateUserPaymentStatus, inviteUserToGroup, deleteExpense, searchUsers } from '../utils/database';
 import ExpenseInput from '../components/ExpenseInput';
 import SettlementSummary from '../components/SettlementSummary';
 import QRCode from 'qrcode.react';
-import { Typography, Avatar, Dialog, DialogTitle, DialogContent, TextField, List, ListItem, ListItemAvatar, ListItemText, Grid, CardContent, Box, Chip, Card, CardHeader, CardActions, IconButton, Collapse, Snackbar, Alert,Autocomplete  } from '@mui/material';
-import { Add as AddIcon, Share as ShareIcon, PanTool as PanToolIcon, CheckCircle as CheckCircleIcon, ExpandMore as ExpandMoreIcon, Delete as DeleteIcon, Home as HomeIcon } from '@mui/icons-material';
+import { Typography, Avatar, Dialog, DialogTitle, DialogContent, TextField, List, ListItem, ListItemAvatar, ListItemText, Grid, CardContent, Box, Chip, Card, CardHeader, CardActions, IconButton, Collapse, Snackbar, Alert, Autocomplete } from '@mui/material';
+import { Add as AddIcon, Share as ShareIcon, PanTool as PanToolIcon, CheckCircle as CheckCircleIcon, ExpandMore as ExpandMoreIcon, Delete as DeleteIcon, Home as HomeIcon, QrCode as QrCodeIcon } from '@mui/icons-material';
 import { PageContainer, Header, StyledButton } from '../styles/CommonStyles';
 import { onSnapshot, doc, collection, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
@@ -130,6 +130,9 @@ const GroupScreen = () => {
           <StyledButton startIcon={<AddIcon />} onClick={() => setInviteDialogOpen(true)}>
             メンバーを招待
           </StyledButton>
+          <StyledButton startIcon={<QrCodeIcon />} onClick={handleShareQR}>
+            QRコードで招待
+          </StyledButton>
         </Box>
       </Header>
 
@@ -204,13 +207,19 @@ const GroupScreen = () => {
           </Box>
         </Grid>
       </Grid>
-{/* 
+
+      
       <Dialog open={qrDialogOpen} onClose={() => setQrDialogOpen(false)}>
-        <DialogTitle>グループ招待QRコード</DialogTitle>
-        <DialogContent>
-          <QRCode value={`https://quickaplit.web.app/group/${groupId}`} size={256} />
-        </DialogContent>
-      </Dialog> */}
+  <DialogTitle>グループ招待QRコード</DialogTitle>
+  <DialogContent>
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <QRCode value={`https://quickaplit.web.app/join/${groupId}`} size={256} />
+      <Typography variant="body2" sx={{ mt: 2 }}>
+        このQRコードをスキャンしてグループに参加できます。
+      </Typography>
+    </Box>
+  </DialogContent>
+</Dialog>
 
 <Dialog 
         open={inviteDialogOpen} 

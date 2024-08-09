@@ -12,6 +12,7 @@ import SettlementScreen from './screens/SettlementScreen';
 import UserProfileScreen from './screens/UserProfileScreen';
 import { auth } from './firebaseConfig';
 import theme from './styles/theme';
+import QRCodeJoinFlow  from './components/QRCodeScanner'
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -42,6 +43,8 @@ const App = () => {
           <Route path="/add-expense/:groupId" element={user ? <AddExpenseScreen /> : <Navigate to="/login" />} />
           <Route path="/settlement/:groupId" element={user ? <SettlementScreen /> : <Navigate to="/login" />} />
           <Route path="/profile" element={user ? <UserProfileScreen /> : <Navigate to="/login" />} />
+          <Route path="/join/:groupId?" element={<QRCodeJoinFlow />} />
+
         </Routes>
       </Router>
     </ThemeProvider>

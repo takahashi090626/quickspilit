@@ -4,9 +4,9 @@ import { auth, db, storage } from '../firebaseConfig';
 import { updateProfile } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { TextField, Button, Typography, Avatar, Box, CircularProgress } from '@mui/material';
-import { CameraAlt as CameraIcon } from '@mui/icons-material';
-import { PageContainer, StyledCard } from '../styles/CommonStyles';
+import { TextField, Button, Typography, Avatar, Box, CircularProgress, Container, Paper } from '@mui/material';
+import { CameraAlt as CameraIcon, Home as HomeIcon } from '@mui/icons-material';
+import { PageContainer, StyledButton } from '../styles/CommonStyles';
 
 const UserProfileScreen = () => {
   const [username, setUsername] = useState('');
@@ -72,51 +72,58 @@ const UserProfileScreen = () => {
 
   return (
     <PageContainer>
-      <StyledCard sx={{ maxWidth: 400, margin: 'auto', padding: 3 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Avatar src={avatarUrl} sx={{ width: 120, height: 120, mb: 2 }} />
-          <input
-            accept="image/*"
-            type="file"
-            onChange={handleAvatarChange}
-            style={{ display: 'none' }}
-            id="avatar-input"
-          />
-          <label htmlFor="avatar-input">
-            <Button variant="contained" component="span" startIcon={<CameraIcon />}>
-              アイコンを変更
+      <Container maxWidth="sm">
+        <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#333' }}>
+              プロフィール編集
+            </Typography>
+            <StyledButton startIcon={<HomeIcon />} onClick={() => navigate('/')}>
+              ホームに戻る
+            </StyledButton>
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Avatar src={avatarUrl} sx={{ width: 120, height: 120, mb: 2 }} />
+            <input
+              accept="image/*"
+              type="file"
+              onChange={handleAvatarChange}
+              style={{ display: 'none' }}
+              id="avatar-input"
+            />
+            <label htmlFor="avatar-input">
+              <Button variant="outlined" component="span" startIcon={<CameraIcon />} sx={{ mb: 2 }}>
+                アイコンを変更
+              </Button>
+            </label>
+            <TextField
+              label="ユーザーネーム"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              variant="outlined"
+              fullWidth
+              margin="normal"
+            />
+            <TextField
+              label="ユーザーID"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              variant="outlined"
+              fullWidth
+              margin="normal"
+            />
+            <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={handleUpdateProfile}
+              disabled={isLoading}
+              sx={{ mt: 3, width: '100%' }}
+            >
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'プロフィールを更新'}
             </Button>
-          </label>
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#333', mt: 2 }}>
-            プロフィール編集
-          </Typography>
-          <TextField
-            label="ユーザーネーム"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            variant="outlined"
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="ユーザーID"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            variant="outlined"
-            fullWidth
-            margin="normal"
-          />
-          <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={handleUpdateProfile}
-            disabled={isLoading}
-            sx={{ mt: 2 }}
-          >
-            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'プロフィールを更新'}
-          </Button>
-        </Box>
-      </StyledCard>
+          </Box>
+        </Paper>
+      </Container>
     </PageContainer>
   );
 };

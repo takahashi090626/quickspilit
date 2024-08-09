@@ -4,7 +4,7 @@ import { auth, db, storage } from '../firebaseConfig';
 import { updateProfile } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { TextField, Button, Typography, Avatar, Box, CircularProgress, Container, Paper } from '@mui/material';
+import { TextField, Button, Typography, Avatar, Box, CircularProgress, Container, Paper, Divider } from '@mui/material';
 import { CameraAlt as CameraIcon, Home as HomeIcon } from '@mui/icons-material';
 import { PageContainer, StyledButton } from '../styles/CommonStyles';
 
@@ -104,14 +104,15 @@ const UserProfileScreen = () => {
               fullWidth
               margin="normal"
             />
-            <TextField
-              label="ユーザーID"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              variant="outlined"
-              fullWidth
-              margin="normal"
-            />
+            <Divider sx={{ width: '100%', my: 2 }} />
+            <Box sx={{ width: '100%', mb: 2 }}>
+              <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                ユーザーID
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                {userId}
+              </Typography>
+            </Box>
             <Button 
               variant="contained" 
               color="primary" 

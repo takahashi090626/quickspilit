@@ -122,13 +122,13 @@ const GroupScreen = () => {
         <Typography variant="h4" gutterBottom>{groupName}</Typography>
         <Box>
           <StyledButton startIcon={<HomeIcon />} onClick={() => navigate('/')} sx={{ mr: 2 }}>
-            ホームに戻る
+            {/* ホームに戻る */}
           </StyledButton>
           <StyledButton startIcon={<AddIcon />} onClick={() => setInviteDialogOpen(true)}>
-            メンバーを招待
+            {/* メンバーを招待 */}
           </StyledButton>
           <StyledButton startIcon={<QrCodeIcon />} onClick={handleShareQR}>
-            QRコードで招待
+            {/* QRコードで招待 */}
           </StyledButton>
         </Box>
       </Header>
